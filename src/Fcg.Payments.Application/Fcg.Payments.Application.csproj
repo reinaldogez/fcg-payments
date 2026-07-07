@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Abstração de publish (IPublishEndpoint); a Application não conhece RabbitMQ.
+         Versão fixada: a 9.x é comercial. -->
+    <PackageReference Include="MassTransit" Version="8.5.10" />
+    <!-- Contratos de evento de integração (records puros) — OrderPlacedEvent / PaymentProcessedEvent. -->
+    <PackageReference Include="Fcg.Contracts" Version="1.1.0" />
+    <!-- Abstração de log (ILogger) para a semântica de borda do use case de processamento. -->
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Fcg.Payments.Domain\Fcg.Payments.Domain.csproj" />
+  </ItemGroup>
+
+</Project>

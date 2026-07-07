@@ -1,0 +1,13 @@
+<Project>
+
+  <PropertyGroup>
+    <!-- Liga os analisadores de estilo IDExxxx no build (equivalente ao dotnet format style). -->
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+
+    <!-- As regras de estilo/qualidade ja vem curadas como warning no .editorconfig
+         (muita coisa em none/suggestion/silent). Promover warning a erro faz o estilo
+         quebrar o build tanto local quanto na CI. -->
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+</Project>

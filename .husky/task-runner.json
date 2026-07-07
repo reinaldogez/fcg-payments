@@ -1,0 +1,22 @@
+{
+  "$schema": "https://alirezanet.github.io/Husky.Net/schema.json",
+  "tasks": [
+    {
+      "name": "csharpier-check",
+      "command": "dotnet",
+      "args": ["csharpier", "check", "."],
+      "include": ["**/*.cs"]
+    },
+    {
+      "name": "dotnet-format",
+      "command": "dotnet",
+      "args": ["format", "style", "--verify-no-changes", "--severity", "warn"],
+      "include": ["**/*.cs"]
+    },
+    {
+      "name": "build",
+      "command": "dotnet",
+      "args": ["build", "--no-incremental"]
+    }
+  ]
+}

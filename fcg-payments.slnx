@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Fcg.Payments.Domain/Fcg.Payments.Domain.csproj" />
+    <Project Path="src/Fcg.Payments.Application/Fcg.Payments.Application.csproj" />
+    <Project Path="src/Fcg.Payments.Infrastructure/Fcg.Payments.Infrastructure.csproj" />
+    <Project Path="src/Fcg.Payments.Api/Fcg.Payments.Api.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Fcg.Payments.Tests.Unit/Fcg.Payments.Tests.Unit.csproj" />
+    <Project Path="tests/Fcg.Payments.Tests.Integration/Fcg.Payments.Tests.Integration.csproj" />
+  </Folder>
+</Solution>

@@ -1,0 +1,32 @@
+# Normaliza finais de linha. O .editorconfig exige `end_of_line = lf`;
+# sem isto, core.autocrlf=true no Windows reintroduz CRLF e quebra
+# `dotnet format --verify-no-changes`.
+
+# Default: deixa o Git detectar texto e normalizar para LF no repositorio.
+* text=auto eol=lf
+
+# Fontes e configs do projeto: sempre LF.
+*.cs        text eol=lf
+*.csproj    text eol=lf
+*.slnx      text eol=lf
+*.json      text eol=lf
+*.props     text eol=lf
+*.targets   text eol=lf
+*.config    text eol=lf
+*.editorconfig text eol=lf
+*.md        text eol=lf
+*.yml       text eol=lf
+*.yaml      text eol=lf
+*.sh        text eol=lf
+
+# Scripts do Windows mantem CRLF.
+*.cmd       text eol=crlf
+*.bat       text eol=crlf
+*.ps1       text eol=crlf
+
+# Binarios: nunca normalizar.
+*.png       binary
+*.jpg       binary
+*.ico       binary
+*.dll       binary
+*.snk       binary
