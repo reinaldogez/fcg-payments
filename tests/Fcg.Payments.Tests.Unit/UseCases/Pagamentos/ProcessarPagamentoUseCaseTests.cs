@@ -127,7 +127,7 @@ public class ProcessarPagamentoUseCaseTests
         VerificarInteracoesExatas(evento);
     }
 
-    // (e) Mapeamento por switch: afirma o membro NOMEADO do enum de contrato nos dois
+    // (e) Mapeamento por switch: afirma o membro nomeado do enum de contrato nos dois
     // ramos — nunca comparação por int (a coincidência ordinal não está sendo explorada).
     [Theory]
     [InlineData(false, PaymentStatus.Approved)]
@@ -167,7 +167,7 @@ public class ProcessarPagamentoUseCaseTests
             .ReturnsAsync(resultado);
     }
 
-    // Prova (a): no caminho feliz ocorrem EXATAMENTE consulta → autorizar → adicionar →
+    // Prova (a): no caminho feliz ocorrem exatamente consulta → autorizar → adicionar →
     // publicar, e nada mais (nenhum SaveChanges/transação a mockar porque a dependência
     // sequer existe no caso de uso).
     private void VerificarInteracoesExatas(OrderPlacedEvent evento)

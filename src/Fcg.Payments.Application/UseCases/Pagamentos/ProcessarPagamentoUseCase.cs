@@ -10,7 +10,7 @@ using Microsoft.Extensions.Logging;
 namespace Fcg.Payments.Application.UseCases.Pagamentos;
 
 // Único caso de uso do serviço: decide o pagamento de um pedido e publica o veredito.
-// NÃO comita nem abre transação própria — o commit é do harness do Inbox (transação
+// Não comita nem abre transação própria — o commit é do harness do Inbox (transação
 // única do contexto scoped ao consumo). Nenhuma unidade de trabalho é injetada de
 // propósito: um commit aninhado gravaria parte fora da transação do harness, e o bug
 // só apareceria sob redelivery.
