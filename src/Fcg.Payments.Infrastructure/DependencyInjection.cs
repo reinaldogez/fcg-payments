@@ -1,5 +1,6 @@
 using Fcg.Payments.Domain.Interfaces;
 using Fcg.Payments.Infrastructure.Gateways;
+using Fcg.Payments.Infrastructure.Messaging;
 using Fcg.Payments.Infrastructure.Persistence;
 using Fcg.Payments.Infrastructure.Persistence.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -33,6 +34,8 @@ public static class DependencyInjection
         services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<PaymentsDbContext>());
 
         services.AddScoped<IGatewayPagamento, GatewayPagamentoSimulado>();
+
+        services.AddPaymentsMessaging(configuration);
         return services;
     }
 }

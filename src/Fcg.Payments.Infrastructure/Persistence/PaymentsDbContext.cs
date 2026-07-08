@@ -1,5 +1,6 @@
 using Fcg.Payments.Domain.Entities;
 using Fcg.Payments.Domain.Interfaces;
+using MassTransit;
 using Microsoft.EntityFrameworkCore;
 
 namespace Fcg.Payments.Infrastructure.Persistence;
@@ -16,8 +17,13 @@ public class PaymentsDbContext(DbContextOptions<PaymentsDbContext> options)
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        // Schema de mensageria transacional entra numa migration própria — aqui só o domínio.
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(PaymentsDbContext).Assembly);
+
+        // Outbox transacional (a linha do evento cai na mesma transação do agregado no publish)
+        // + Inbox ativo (dedup do consumo por MessageId) — este serviço consome e publica.
+        modelBuilder.AddTransactionalOutboxEntities();
+        modelBuilder.AddInboxStateEntity();
+
         base.OnModelCreating(modelBuilder);
     }
 }

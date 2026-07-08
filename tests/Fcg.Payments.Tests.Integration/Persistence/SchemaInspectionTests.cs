@@ -106,7 +106,7 @@ public class SchemaInspectionTests(PaymentsApiFactory factory) : IntegrationTest
     }
 
     [Fact]
-    public async Task SchemaDeMensageriaAindaNaoDeveExistir()
+    public async Task SchemaDeMensageriaDeveExistir()
     {
         await using AsyncServiceScope scope = Factory.Services.CreateAsyncScope();
         PaymentsDbContext db = scope.ServiceProvider.GetRequiredService<PaymentsDbContext>();
@@ -117,8 +117,7 @@ public class SchemaInspectionTests(PaymentsApiFactory factory) : IntegrationTest
             )
             .ToListAsync();
 
-        // As tabelas do Inbox/Outbox nascem numa migration própria (wiring de mensageria);
-        // por ora não existem. Esta negativa será invertida quando esse wiring entrar.
-        tabelas.Should().NotContain(["inbox_state", "outbox_message", "outbox_state"]);
+        // O wiring de mensageria trouxe as tabelas do Inbox/Outbox transacional (migration própria).
+        tabelas.Should().Contain(["inbox_state", "outbox_message", "outbox_state"]);
     }
 }
