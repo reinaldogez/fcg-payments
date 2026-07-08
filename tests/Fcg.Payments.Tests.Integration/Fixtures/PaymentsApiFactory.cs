@@ -1,5 +1,4 @@
 using Fcg.Payments.Infrastructure.Persistence;
-using MassTransit;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
@@ -28,6 +27,10 @@ public class PaymentsApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
         "rabbitmq:3.13-management-alpine"
     ).Build();
 
+    // Connection amqp do container, para o teste de topologia abrir um canal direto e inspecionar
+    // fila/exchange declaradas pelo bus (o bus é iniciado sob demanda, não pela fixture).
+    public string RabbitMqConnectionString => _rabbitMq.GetConnectionString();
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         // Satisfaz o fail-fast de connection string do startup e aponta o DbContext ao container.
@@ -47,12 +50,9 @@ public class PaymentsApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
         {
             // Sem os hosted services do MassTransit, o bus não sobe sozinho (evita o deadlock do
             // sweeper do Outbox com o reset de banco). O bus é iniciado sob demanda nos testes de
-            // topologia; publish continua indo para a OutboxMessage via DbContext.
+            // topologia; o IPublishEndpoint real do MassTransit segue resolvível e o publish cai
+            // na OutboxMessage via DbContext.
             services.RemoveAll<IHostedService>();
-
-            // O publish real (Outbox/broker) só é cabeado numa etapa posterior; o no-op resolve a
-            // dependência de IPublishEndpoint do use case para o host compor.
-            services.AddSingleton<IPublishEndpoint, PublishEndpointNoop>();
         });
     }
 
@@ -70,7 +70,11 @@ public class PaymentsApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
     {
         using IServiceScope scope = Services.CreateScope();
         PaymentsDbContext db = scope.ServiceProvider.GetRequiredService<PaymentsDbContext>();
-        await db.Database.ExecuteSqlRawAsync("TRUNCATE pagamentos RESTART IDENTITY CASCADE;");
+        // Cobre também o estado do Inbox/Outbox: sem isso a dedup por MessageId de uma execução
+        // vazaria para a seguinte (as tabelas do MassTransit vivem no mesmo contexto).
+        await db.Database.ExecuteSqlRawAsync(
+            "TRUNCATE pagamentos, inbox_state, outbox_message, outbox_state RESTART IDENTITY CASCADE;"
+        );
     }
 
     async Task IAsyncLifetime.DisposeAsync()
