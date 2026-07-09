@@ -27,7 +27,7 @@ proteger).
   - [Migração (Job de bootstrap)](#migração-job-de-bootstrap)
   - [Observabilidade](#observabilidade)
   - [Health checks](#health-checks)
-  - [Imagem e visibilidade no GHCR](#imagem-e-visibilidade-no-ghcr)
+  - [Imagem no GHCR](#imagem-no-ghcr)
   - [Deploy](#deploy)
 
 ## O que o serviço faz
@@ -240,13 +240,9 @@ O broker (RabbitMQ) **não** entra no `/health/ready`: o **Outbox** desacopla o 
 ao broker (se o RabbitMQ cai, o consumo para mas o `PaymentProcessedEvent` pendente fica seguro na
 `outbox_message`), então derrubar a readiness por causa dele reiniciaria o pod à toa.
 
-## Imagem e visibilidade no GHCR
+## Imagem no GHCR
 
 A imagem é publicada em **`ghcr.io/reinaldogez/fcg-payments`** (tags `latest` + `{sha}`).
-
-> ⚠️ **Visibilidade:** no primeiro publish a imagem nasce **privada**. Para consumo anônimo
-> (ex.: `docker pull` sem login), torne o pacote **público** manualmente uma vez em
-> **GitHub → Packages → `fcg-payments` → Package settings → Change visibility → Public**.
 
 ## Deploy
 
