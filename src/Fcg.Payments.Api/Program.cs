@@ -1,4 +1,5 @@
 using Fcg.Payments.Api.Health;
+using Fcg.Payments.Api.Observability;
 using Fcg.Payments.Application;
 using Fcg.Payments.Application.Options;
 using Fcg.Payments.Infrastructure;
@@ -6,6 +7,10 @@ using Fcg.Payments.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
+
+// Observabilidade config-gated (console sempre; Loki/OTLP só com env). Entra antes do
+// check do Job para que o modo --migrate também emita log estruturado no console.
+builder.AddObservability();
 
 // Fail-fast: o serviço depende de PostgreSQL; sem connection string não há boot válido
 // (nem para o Job de migração).
