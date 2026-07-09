@@ -293,8 +293,6 @@ dotnet_naming_style.async_method_style.capitalization = pascal_case
 # ============================================================================
 [tests/**/*.cs]
 dotnet_naming_rule.async_methods_should_end_with_async.severity = none
-# APIs sync sem versão async são comuns em código de teste (ex: JwtSecurityTokenHandler.ValidateToken)
-dotnet_diagnostic.CA1849.severity = none
 
 # ============================================================================
 # EF Core migrations — código gerado pela ferramenta (namespace block-scoped,
