@@ -48,6 +48,7 @@ public static class MassTransitConfiguration
                     ushort port = ushort.TryParse(configuration["RabbitMq:Port"], out ushort p)
                         ? p
                         : (ushort)5672;
+                    bool useSsl = RabbitMqSsl.Habilitado(configuration);
 
                     cfg.Host(
                         host,
@@ -57,6 +58,14 @@ public static class MassTransitConfiguration
                         {
                             h.Username(username);
                             h.Password(password);
+
+                            // O broker gerenciado só aceita amqps; o local segue em texto claro
+                            // com a chave ausente. Sem fixar versão de protocolo nem afrouxar a
+                            // validação de certificado: a negociação e a cadeia ficam no default.
+                            if (useSsl)
+                            {
+                                h.UseSsl(_ => { });
+                            }
                         }
                     );
 
