@@ -15,8 +15,9 @@
 
   <ItemGroup>
     <!-- Telemetria config-gated: OTLP para traces+metricas; instrumenta HTTP de entrada
-         (AspNetCore, health) e o bus (source/meter MassTransit). Sem instrumentacao de
-         HttpClient: este servico nao tem HttpClient de negocio. -->
+         (AspNetCore, health), o bus (source/meter MassTransit) e o banco (ActivitySource
+         "Npgsql" do driver, ligado por AddSource — dispensa pacote extra). Sem instrumentacao
+         de HttpClient: este servico nao tem HttpClient de negocio. -->
     <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.16.0" />
     <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.16.0" />
     <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.15.2" />

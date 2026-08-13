@@ -45,9 +45,11 @@ public static class ObservabilityModule
         );
 
         // OTLP (traces/metrics) so com endpoint configurado. Instrumenta HTTP de entrada
-        // (AspNetCore, health) e o bus — MassTransit como source (trace bilateral: encadeia
+        // (AspNetCore, health), o bus — MassTransit como source (trace bilateral: encadeia
         // publish e consume pelo TraceId via headers AMQP, o que faz o payments ser o elo do
-        // meio da saga) e meter.
+        // meio da saga) e meter — e o banco, pelo ActivitySource "Npgsql" do driver, o que faz
+        // o span da consulta ao Postgres aparecer filho do consume da mensagem. O texto do
+        // comando SQL fica fora do span (opt-in do driver desligado, para nao vazar parametro).
         if (!string.IsNullOrWhiteSpace(otelEndpoint))
         {
             builder
@@ -57,6 +59,7 @@ public static class ObservabilityModule
                     tracing
                         .AddAspNetCoreInstrumentation()
                         .AddSource("MassTransit")
+                        .AddSource("Npgsql")
                         .AddOtlpExporter(exporter => exporter.Endpoint = new Uri(otelEndpoint))
                 )
                 .WithMetrics(metrics =>
