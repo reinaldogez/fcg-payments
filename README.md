@@ -17,6 +17,7 @@ proteger).
     - [Eventos consumidos e publicados](#eventos-consumidos-e-publicados)
     - [Regra do gateway simulado](#regra-do-gateway-simulado)
     - [Superfície HTTP](#superfície-http)
+    - [Posição na plataforma](#posição-na-plataforma)
   - [Arquitetura](#arquitetura)
   - [Pré-requisitos](#pré-requisitos)
   - [Token para restaurar o `Fcg.Contracts`](#token-para-restaurar-o-fcgcontracts)
@@ -39,7 +40,7 @@ pagamento de um pedido vive no agregado `Pagamento` e percorre a saga assim:
 2. Este serviço **consome** o evento (Inbox idempotente), executa o gateway simulado e decide
    aprovar/rejeitar — nasce um `Pagamento` já em estado terminal.
 3. Na **mesma transação** do consumo, **publica** `PaymentProcessedEvent` (via Outbox) com o
-   veredito. O catalog e o notifications reagem ao veredito.
+   veredito. O catalog e o consumidor de notificações reagem ao veredito.
 
 Os dados de usuário/jogo (`UserEmail`/`UserName`/`GameName`) que o evento de entrada carrega são
 **trânsito puro**: copiados do evento de entrada para o de saída no escopo do consumo, nunca
@@ -76,6 +77,27 @@ threshold.
 
 **Não há endpoints REST de negócio** — sem controllers, sem auth, sem OpenAPI. A superfície HTTP
 inteira são os três health endpoints (ver [Health checks](#health-checks)).
+
+### Posição na plataforma
+
+> **Dois "gateways", e só um deles é deste serviço.** Todas as menções a *gateway* neste README
+> — inclusive a [regra dos R$ 5.000](#regra-do-gateway-simulado) — são do **gateway de pagamento
+> simulado**, o adaptador determinístico em-processo por trás da porta `IGatewayPagamento`. O
+> **Amazon API Gateway**, entrada única da plataforma, é outra coisa, e este serviço **não fica
+> atrás dele**.
+
+Este serviço **não tem rota no Amazon API Gateway** nem registro no AWS Cloud Map, **por
+construção**: ele é consumidor de eventos, e uma superfície pública seria só um alvo a mais.
+Não há caminho de rede da internet até ele — o trabalho entra pela mensageria, e a única porta
+HTTP que ele abre são os health endpoints, consumidos de dentro do cluster.
+
+O **broker muda de lugar conforme o ambiente, e isso é configuração, não código**: local é um
+**RabbitMQ** em container, em texto claro na porta 5672; na plataforma de nuvem é o **Amazon MQ**
+(motor RabbitMQ, privado), que aceita apenas `amqps` — porta 5671 e
+[`RabbitMq__UseSsl=true`](#variáveis-de-ambiente). Mesmo protocolo dos dois lados.
+
+A composição da plataforma — manifestos, Terraform do satélite e os procedimentos de subida —
+vive no repositório de orquestração [`fcg-ops`](https://github.com/reinaldogez/fcg-ops).
 
 ## Arquitetura
 
@@ -185,17 +207,29 @@ docker run --rm -p 8080:8080 \
 > Sem a connection string `Payments` o serviço **falha no startup** (fail-fast), por design — não
 > sobe pela metade.
 
+> Os valores acima são os de um ambiente **local**. Contra o **Amazon MQ** da plataforma de
+> nuvem, `RabbitMq__Host` recebe o endpoint do broker gerenciado, com `RabbitMq__Port=5671` e
+> `RabbitMq__UseSsl=true`.
+
 ### Variáveis de ambiente
 
 | Variável | Obrigatória | Descrição |
 | :--- | :--- | :--- |
 | `ConnectionStrings__Payments` | sim | Conexão do PostgreSQL (pagamentos) |
 | `RabbitMq__Host` | sim | Host do RabbitMQ |
-| `RabbitMq__Port` | não | Porta do RabbitMQ (default 5672) |
+| `RabbitMq__Port` | não | Porta do RabbitMQ (default 5672; com TLS, tipicamente 5671) |
 | `RabbitMq__Username` / `RabbitMq__Password` | sim | Credenciais do RabbitMQ |
+| `RabbitMq__UseSsl` | não | Liga TLS (`amqps`) na conexão com o broker (default `false`) |
 | `Payment__RejectionThreshold` | não | Limite de autorização da simulação (default 5000) |
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | não | Endpoint OTLP — só então traces/métricas são exportados |
 | `Loki__Url` | não | URL do Loki — só então o sink Loki é ligado |
+
+> **Sobre o `RabbitMq__UseSsl`** (onde cada broker vive está em
+> [Posição na plataforma](#posição-na-plataforma)). A conexão negocia TLS no default do cliente,
+> sem versão de protocolo fixada nem validação de certificado afrouxada. A chave **não** ajusta
+> a porta: informe `RabbitMq__Port` junto. Um valor presente e não-booleano (`yes`, `1`)
+> **derruba o startup** em vez de cair no default — silenciar isso faria o serviço conectar sem
+> TLS achando que tem.
 
 ## Migração (Job de bootstrap)
 
