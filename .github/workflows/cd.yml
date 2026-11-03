@@ -1,0 +1,112 @@
+name: cd
+
+# entrega do commit: chamado pelo ci.yml depois dos testes, so em push na main.
+# publica a imagem (ghcr para os perfis locais, ecr para o cluster) e atualiza o
+# cluster quando ele existe. a logica mora em .github/cd/.
+
+on:
+  workflow_call:
+
+permissions: {}
+
+env:
+  AWS_REGION: us-east-1
+  EKS_CLUSTER: fcg-eks
+  K8S_NAMESPACE: fcg
+  KUBECTL_VERSION: v1.37.1
+  KUBECTL_SHA256: 65691ff77eb6fa44c908b77a1082c9f092c3b9733b5cefabec0d1104890e21a8
+  TRIVY_IMAGE: public.ecr.aws/aquasecurity/trivy:0.76.0@sha256:2416d1f74045b57274df1a340eee6b510cacd73c66a6ccb8da092b117eb7d222
+
+jobs:
+  imagem:
+    name: Imagem — build, scan e push
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Credenciais AWS (OIDC)
+        uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Guarda de tag
+        id: guarda
+        env:
+          AWS_ROLE_ARN: ${{ vars.AWS_ROLE_ARN }}
+        run: bash .github/cd/imagem.sh guarda
+
+      - name: Build
+        if: steps.guarda.outputs.construir == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: bash .github/cd/imagem.sh construir
+
+      # o scan reporta e nunca segura a publicacao
+      - name: Scan de vulnerabilidades (nao bloqueante)
+        if: steps.guarda.outputs.construir == 'true'
+        continue-on-error: true
+        timeout-minutes: 8
+        run: bash .github/cd/imagem.sh escanear
+
+      - name: Push (GHCR, depois ECR)
+        if: steps.guarda.outputs.construir == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: bash .github/cd/imagem.sh publicar
+
+      - name: Verificacao do manifest no ECR
+        run: bash .github/cd/imagem.sh verificar
+
+  deploy:
+    name: Deploy — EKS
+    needs: imagem
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    # um deploy por vez por repositorio; o que esta rodando nunca e cancelado
+    concurrency:
+      group: deploy-${{ github.repository }}
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Credenciais AWS (OIDC)
+        uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: kubectl fixado
+        run: bash .github/cd/deploy.sh kubectl
+
+      - name: Guardas do cluster
+        id: guardas
+        env:
+          AWS_ROLE_ARN: ${{ vars.AWS_ROLE_ARN }}
+        run: bash .github/cd/deploy.sh guardas
+
+      - name: Migration (Job recriado com a imagem nova)
+        if: steps.guardas.outputs.implantar == 'true'
+        run: bash .github/cd/deploy.sh migration
+
+      - name: Rollout
+        if: steps.guardas.outputs.implantar == 'true'
+        run: bash .github/cd/deploy.sh rollout
+
+      - name: Evidencia de acesso do pipeline
+        if: always() && steps.guardas.outputs.implantar == 'true'
+        run: bash .github/cd/deploy.sh evidencia
