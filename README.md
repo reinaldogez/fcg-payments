@@ -282,3 +282,5 @@ A imagem é publicada em **`ghcr.io/reinaldogez/fcg-payments`** (tags `latest` +
 
 Os manifestos **Kubernetes** deste serviço **não vivem aqui**: estão centralizados no repositório
 de orquestração **`fcg-ops`** (Deployment/Service/ConfigMap/Secret + o `Job` de migrate).
+
+Entrega: cada push na `main` publica a imagem `:<sha>` no ECR e atualiza o cluster EKS quando ele está de pé (`.github/workflows/cd.yml`).
