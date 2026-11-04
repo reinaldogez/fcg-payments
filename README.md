@@ -284,3 +284,4 @@ Os manifestos **Kubernetes** deste serviço **não vivem aqui**: estão centrali
 de orquestração **`fcg-ops`** (Deployment/Service/ConfigMap/Secret + o `Job` de migrate).
 
 Entrega: cada push na `main` publica a imagem `:<sha>` no ECR e atualiza o cluster EKS quando ele está de pé (`.github/workflows/cd.yml`).
+Rollback: reverter o commit na `main` (`git revert`) gera uma imagem nova e um novo deploy.
