@@ -285,3 +285,4 @@ de orquestração **`fcg-ops`** (Deployment/Service/ConfigMap/Secret + o `Job` d
 
 Entrega: cada push na `main` publica a imagem `:<sha>` no ECR e atualiza o cluster EKS quando ele está de pé (`.github/workflows/cd.yml`).
 Rollback: reverter o commit na `main` (`git revert`) gera uma imagem nova e um novo deploy.
+Deploys sao serializados por repositorio e o mais recente vence (`concurrency` do job de deploy).
